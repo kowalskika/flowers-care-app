@@ -1,0 +1,58 @@
+{
+  "name": "flowers-care-app",
+  "version": "0.1.0",
+  "description": "An application where users can take care of their plants and trade them on the marketplace.",
+  "main": "index.ts",
+  "scripts": {
+    "start": "ts-node index.ts",
+    "start-dev": "tsnd index.ts",
+    "test": "jest",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "Kacper Kowalski",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.1",
+    "express-async-errors": "^3.1.1",
+    "express-fileupload": "^1.4.0",
+    "express-handlebars": "^6.0.6",
+    "express-rate-limit": "^6.7.0",
+    "mysql2": "^2.3.3",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0",
+    "ts-jest": "^29.0.5",
+    "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^4.8.4",
+    "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.14",
+    "@types/jest": "^29.4.0",
+    "@types/method-override": "^0.0.32",
+    "@types/node": "^18.11.4",
+    "@types/uuid": "^8.3.4",
+    "@babel/core": "^7.21.0",
+    "@babel/eslint-parser": "^7.19.1",
+    "eslint": "^8.35.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-plugin-import": "^2.25.3",
+    "eslint-plugin-jsx-a11y": "^6.5.1",
+    "eslint-plugin-react": "^7.28.0",
+    "eslint-plugin-react-hooks": "^4.3.0"
+  },
+  "babel": {},
+  "eslintConfig": {
+    "parser": "@babel/eslint-parser",
+    "parserOptions": {
+      "sourceType": "module",
+      "allowImportExportEverywhere": true
+    }
+  },
+  "type": "commonjs"
+}
+
+
