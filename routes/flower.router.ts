@@ -18,7 +18,7 @@ flowerRouter
   .get('/:flowerId', async (req, res) => {
     const flowerEntity = await FlowerRecord.getOne(req.params.flowerId);
     if (flowerEntity === null) {
-      throw new ValidationError('There is no child with this ID. Try again.');
+      throw new ValidationError('Ops, something went wrong: flower with this id does not exist. Please try again.');
     }
     res.json(flowerEntity);
   });
@@ -39,6 +39,10 @@ flowerRouter
   });
 
 flowerRouter
-  .delete('/:id', (req, res) => {
-    res.json({ message: 'deleted one' });
+  .delete('/:id', async (req, res) => {
+    const flowerToDelete = await FlowerRecord.getOne(req.params.id);
+    if (!flowerToDelete) throw new ValidationError('Ops, something went wrong: flower with this id does not exist. Please try again.');
+
+    await flowerToDelete.delete();
+    res.end();
   });

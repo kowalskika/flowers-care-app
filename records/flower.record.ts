@@ -33,16 +33,22 @@ export class FlowerRecord implements FlowerEntity {
     }
   }
 
-  public static async listAll(): Promise<FlowerEntity[]> {
+  public static async listAll(): Promise<FlowerRecord[]> {
     const [flowersList] = (await pool.execute('SELECT * FROM `flowers` ORDER BY `name` ASC')) as FlowerRecordResult;
     return flowersList.map((flower: FlowerRecord) => new FlowerRecord(flower));
   }
 
-  public static async getOne(id: string): Promise<FlowerEntity> {
+  public static async getOne(id: string): Promise<FlowerRecord> {
     const [flower] = (await pool.execute('SELECT * FROM `flowers` WHERE `id` = :id', {
       id,
     })) as FlowerRecordResult;
     return flower.length === 0 ? null : new FlowerRecord(flower[0]);
+  }
+
+  public async delete(): Promise<void | null> {
+    await pool.execute('DELETE FROM `flowers` WHERE `id` = :id', {
+      id: this.id,
+    });
   }
 
   public async insert(): Promise<string> {
