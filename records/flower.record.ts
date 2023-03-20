@@ -4,9 +4,9 @@ import { FlowerEntity } from '../types/flower/flower.entity';
 import { ValidationError } from '../utils/errors';
 import { pool } from '../utils/db';
 
-type FlowerRecordResult = [FlowerRecord[], FieldPacket[]];
+type FlowerRecordResult = [FlowerEntity[], FieldPacket[]];
 
-export class FlowerRecord {
+export class FlowerRecord implements FlowerEntity {
   public id?: string;
   public name: string;
   public species?: string;
@@ -33,9 +33,16 @@ export class FlowerRecord {
     }
   }
 
-  public static async listAll(): Promise<FlowerRecord[]> {
-    const [childrenList] = (await pool.execute('SELECT * FROM `flowers` ORDER BY `name` ASC')) as FlowerRecordResult;
-    return childrenList.map((flower: FlowerRecord) => new FlowerRecord(flower));
+  public static async listAll(): Promise<FlowerEntity[]> {
+    const [flowersList] = (await pool.execute('SELECT * FROM `flowers` ORDER BY `name` ASC')) as FlowerRecordResult;
+    return flowersList.map((flower: FlowerRecord) => new FlowerRecord(flower));
+  }
+
+  public static async getOne(id: string): Promise<FlowerEntity> {
+    const [flower] = (await pool.execute('SELECT * FROM `flowers` WHERE `id` = :id', {
+      id,
+    })) as FlowerRecordResult;
+    return flower.length === 0 ? null : new FlowerRecord(flower[0]);
   }
 
   public async insert(): Promise<string> {

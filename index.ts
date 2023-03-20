@@ -5,8 +5,8 @@ import rateLimit from 'express-rate-limit';
 import 'express-async-errors';
 import { config } from './config/config';
 import { handleError } from './utils/errors';
-import { homeRouter } from './routes/home';
-import { flowerRouter } from './routes/flower';
+import { homeRouter } from './routes/home.router';
+import { flowerRouter } from './routes/flower.router';
 
 const app = express();
 app
