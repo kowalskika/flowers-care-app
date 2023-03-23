@@ -1,6 +1,6 @@
 import express from 'express';
 import { FlowerRecord } from '../records/flower.record';
-import { FlowerEntity } from '../types/flower/flower.entity';
+import { FlowerEntity, CreateFlowerReq } from '../types';
 import { ValidationError } from '../utils/errors';
 
 export const flowerRouter = express.Router();
@@ -24,8 +24,10 @@ flowerRouter
   });
 
 flowerRouter
-  .post('/', (req, res) => {
-    res.json({ message: 'add new' });
+  .post('/', async (req, res) => {
+    const addedFlower = new FlowerRecord(req.body as CreateFlowerReq);
+    await addedFlower.insert();
+    res.json(addedFlower);
   });
 
 flowerRouter
