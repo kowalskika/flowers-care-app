@@ -1,8 +1,9 @@
 import { v4 as uuid } from 'uuid';
 import { FieldPacket } from 'mysql2';
-import { FlowerEntity } from '../types/flower/flower.entity';
+import { FlowerEntity } from '../types';
 import { ValidationError } from '../utils/errors';
 import { pool } from '../utils/db';
+import { addDays } from '../utils/addDays';
 
 type FlowerRecordResult = [FlowerEntity[], FieldPacket[]];
 
@@ -16,6 +17,7 @@ export class FlowerRecord implements FlowerEntity {
   public fertilizedAt?: string;
   public wateringInterval: number;
   public isMailSent: boolean = false;
+  public nextWateringAt: string;
 
   constructor(obj: FlowerEntity) {
     this.id = obj.id;
@@ -27,6 +29,7 @@ export class FlowerRecord implements FlowerEntity {
     this.fertilizedAt = obj.fertilizedAt;
     this.wateringInterval = obj.wateringInterval;
     this.isMailSent = obj.isMailSent;
+    this.nextWateringAt = obj.nextWateringAt;
 
     if (!this.name || this.name.length < 3 || this.name.length > 50) {
       throw new ValidationError('Incorrect child name. Name should have at least 3 characters and at most 50 characters.');
@@ -35,14 +38,22 @@ export class FlowerRecord implements FlowerEntity {
 
   public static async listAll(): Promise<FlowerRecord[]> {
     const [flowersList] = (await pool.execute('SELECT * FROM `flowers` ORDER BY `name` ASC')) as FlowerRecordResult;
-    return flowersList.map((flower: FlowerRecord) => new FlowerRecord(flower));
+    return flowersList.map((flower: FlowerRecord) => new FlowerRecord(
+      {
+        ...flower,
+        nextWateringAt: addDays(new Date(flower.wateredAt), Number(flower.wateringInterval)).toJSON().slice(0, 10),
+      },
+    ));
   }
 
   public static async getOne(id: string): Promise<FlowerRecord> {
     const [flower] = (await pool.execute('SELECT * FROM `flowers` WHERE `id` = :id', {
       id,
     })) as FlowerRecordResult;
-    return flower.length === 0 ? null : new FlowerRecord(flower[0]);
+    return flower.length === 0 ? null : new FlowerRecord({
+      ...flower[0],
+      nextWateringAt: addDays(new Date(flower[0].wateredAt), Number(flower[0].wateringInterval)).toJSON().slice(0, 10),
+    });
   }
 
   public async delete(): Promise<void | null> {
@@ -57,7 +68,8 @@ export class FlowerRecord implements FlowerEntity {
     this.info = this.info ?? '';
     this.replantedAt = this.replantedAt ?? '';
     this.fertilizedAt = this.fertilizedAt ?? '';
-    await pool.execute('INSERT INTO `flowers` (`id`, `name`) VALUES (:id, :name, :species, :info, :wateredAt, :replantedAt, :fertilizedAt, :wateringInterval, :isMailSent)', {
+    await pool.execute('INSERT INTO `flowers` (`id`, `name`, `species`, `info`, `wateredAt`, `replantedAt`, `fertilizedAt`, `wateringInterval`, `isMailSent`) VALUES (:id, :name, :species, :info, :wateredAt, :replantedAt, :fertilizedAt, :wateringInterval,'
+      + ' :isMailSent)', {
       id: this.id,
       name: this.name,
       species: this.species,

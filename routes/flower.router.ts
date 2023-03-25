@@ -8,7 +8,6 @@ export const flowerRouter = express.Router();
 flowerRouter
   .get('/', async (req, res) => {
     const flowersList = await FlowerRecord.listAll();
-    console.log(flowersList);
     res.json(
       flowersList as FlowerEntity[],
     );

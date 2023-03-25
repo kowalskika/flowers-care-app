@@ -8,4 +8,5 @@ export interface FlowerEntity {
   fertilizedAt?: string;
   wateringInterval: number;
   isMailSent: boolean;
+  nextWateringAt: string;
 }
