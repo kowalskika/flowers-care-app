@@ -17,6 +17,7 @@ flowerRouter
   .get('/:flowerId', async (req, res) => {
     const flowerEntity = await FlowerRecord.getOne(req.params.flowerId);
     if (flowerEntity === null) {
+      res.status(404);
       throw new ValidationError('Ops, something went wrong: flower with this id does not exist. Please try again.');
     }
     res.json(flowerEntity);
@@ -35,8 +36,17 @@ flowerRouter
   });
 
 flowerRouter
-  .patch('/:id', (req, res) => {
-    res.json({ message: 'partial update data' });
+  .patch('/:id', async (req, res) => {
+    const { body }: {
+      body: any
+    } = req;
+    console.log(req.params.id);
+    const flower = await FlowerRecord.getOne(req.params.id);
+    if (flower === null) {
+      throw new ValidationError('There is no flower with this ID. Try again.');
+    }
+    const nextWaterAt = await flower.updateData(body.wateredAt);
+    res.json(nextWaterAt);
   });
 
 flowerRouter
