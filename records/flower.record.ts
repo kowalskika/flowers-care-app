@@ -4,6 +4,8 @@ import { FlowerEntity } from '../types';
 import { ValidationError } from '../utils/errors';
 import { pool } from '../utils/db';
 import { addDays } from '../utils/addDays';
+import { dateStringToDBDateString } from '../utils/dateStringToDBDateString';
+import { dateToLocaleDateString } from '../utils/dateToLocaleDateString';
 
 type FlowerRecordResult = [FlowerEntity[], FieldPacket[]];
 
@@ -42,9 +44,9 @@ export class FlowerRecord implements FlowerEntity {
     return flowersList.map((flower: FlowerRecord) => new FlowerRecord(
       {
         ...flower,
-        wateredAt: new Date(flower.wateredAt).toLocaleDateString('fr-CH'),
-        fertilizedAt: new Date(flower.fertilizedAt).toLocaleDateString('fr-CH'),
-        replantedAt: new Date(flower.replantedAt).toLocaleDateString('fr-CH'),
+        wateredAt: dateToLocaleDateString(flower.wateredAt),
+        fertilizedAt: dateToLocaleDateString(flower.fertilizedAt),
+        replantedAt: dateToLocaleDateString(flower.replantedAt),
         nextWateringAt: addDays(new Date(flower.wateredAt), Number(flower.wateringInterval)).toLocaleDateString('fr-CH'),
       },
     ));
@@ -77,6 +79,25 @@ export class FlowerRecord implements FlowerEntity {
     });
 
     return this.nextWateringAt;
+  }
+
+  public async updateFlowerInfo(flower: FlowerEntity): Promise<void> {
+    const {
+      info, wateredAt, replantedAt, fertilizedAt, wateringInterval, nextWateringAt, species, name,
+    } = flower;
+    const { id } = this;
+    // eslint-disable-next-line max-len
+    await pool.execute('UPDATE `flowers` SET `name`=:name, `species`=:species, `wateredAt`= :wateredAt, `replantedAt`=:replantedAt, `fertilizedAt`=:fertilizedAt, `nextWateringAt` = :nextWateringAt, `wateringInterval`=:wateringInterval, `info`=:info WHERE `id` = :flowerId', {
+      name,
+      species,
+      wateredAt: dateStringToDBDateString(wateredAt),
+      replantedAt: dateStringToDBDateString(replantedAt),
+      fertilizedAt: dateStringToDBDateString(fertilizedAt),
+      nextWateringAt: dateStringToDBDateString(nextWateringAt),
+      wateringInterval,
+      info,
+      flowerId: id,
+    });
   }
 
   public async insert(): Promise<string> {

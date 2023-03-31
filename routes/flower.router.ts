@@ -31,8 +31,16 @@ flowerRouter
   });
 
 flowerRouter
-  .put('/:id', (req, res) => {
-    res.json({ message: 'update data' });
+  .put('/:id', async (req, res) => {
+    const { body }: {
+      body: FlowerEntity
+    } = req;
+    const flower = await FlowerRecord.getOne(req.params.id);
+    if (flower === null) {
+      throw new ValidationError('There is no flower with this ID. Try again.');
+    }
+    const data = await flower.updateFlowerInfo(body);
+    res.json(data);
   });
 
 flowerRouter
