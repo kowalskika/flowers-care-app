@@ -4,6 +4,8 @@ import { FlowerEntity } from '../types';
 import { ValidationError } from '../utils/errors';
 import { pool } from '../utils/db';
 import { addDays } from '../utils/addDays';
+import { dateStringToDBDateString } from '../utils/dateStringToDBDateString';
+import { dateToLocaleDateString } from '../utils/dateToLocaleDateString';
 
 type FlowerRecordResult = [FlowerEntity[], FieldPacket[]];
 
@@ -42,9 +44,7 @@ export class FlowerRecord implements FlowerEntity {
     return flowersList.map((flower: FlowerRecord) => new FlowerRecord(
       {
         ...flower,
-        wateredAt: new Date(flower.wateredAt).toLocaleDateString('fr-CH'),
-        fertilizedAt: new Date(flower.fertilizedAt).toLocaleDateString('fr-CH'),
-        replantedAt: new Date(flower.replantedAt).toLocaleDateString('fr-CH'),
+        wateredAt: dateToLocaleDateString(flower.wateredAt),
         nextWateringAt: addDays(new Date(flower.wateredAt), Number(flower.wateringInterval)).toLocaleDateString('fr-CH'),
       },
     ));
@@ -54,11 +54,12 @@ export class FlowerRecord implements FlowerEntity {
     const [flower] = (await pool.execute('SELECT * FROM `flowers` WHERE `id` = :id', {
       id,
     })) as FlowerRecordResult;
+    const { fertilizedAt, replantedAt } = flower[0];
     return flower.length === 0 ? null : new FlowerRecord({
       ...flower[0],
       wateredAt: new Date(flower[0].wateredAt).toLocaleDateString('fr-CH'),
-      fertilizedAt: new Date(flower[0].fertilizedAt).toLocaleDateString('fr-CH'),
-      replantedAt: new Date(flower[0].replantedAt).toLocaleDateString('fr-CH'),
+      fertilizedAt: fertilizedAt ? new Date(flower[0].fertilizedAt).toLocaleDateString('fr-CH') : null,
+      replantedAt: replantedAt ? new Date(flower[0].replantedAt).toLocaleDateString('fr-CH') : null,
       nextWateringAt: addDays(new Date(flower[0].wateredAt), Number(flower[0].wateringInterval)).toLocaleDateString('fr-CH'),
     });
   }
@@ -79,26 +80,42 @@ export class FlowerRecord implements FlowerEntity {
     return this.nextWateringAt;
   }
 
+  public async updateFlowerInfo(flower: FlowerEntity): Promise<void> {
+    const {
+      info, wateredAt, replantedAt, fertilizedAt, wateringInterval, nextWateringAt, species, name,
+    } = flower;
+    const { id } = this;
+    await pool.execute('UPDATE `flowers` SET `name`=:name, `species`=:species, `wateredAt`= :wateredAt, `replantedAt`=:replantedAt, `fertilizedAt`=:fertilizedAt, `nextWateringAt` = :nextWateringAt, `wateringInterval`=:wateringInterval, `info`=:info WHERE `id` = :flowerId', {
+      name,
+      species,
+      wateredAt: dateStringToDBDateString(wateredAt),
+      replantedAt: dateStringToDBDateString(replantedAt),
+      fertilizedAt: dateStringToDBDateString(fertilizedAt),
+      nextWateringAt: dateStringToDBDateString(nextWateringAt),
+      wateringInterval,
+      info,
+      flowerId: id,
+    });
+  }
+
   public async insert(): Promise<string> {
     this.id = this.id ?? uuid();
-    this.species = this.species ?? '';
-    this.info = this.info ?? '';
-    this.replantedAt = this.replantedAt ?? null;
-    this.fertilizedAt = this.fertilizedAt ?? null;
+
     this.nextWateringAt = addDays(new Date(this.wateredAt), Number(this.wateringInterval)).toISOString().slice(0, 19).replace('T', ' ');
-    // eslint-disable-next-line max-len
+
     await pool.execute('INSERT INTO `flowers` (`id`, `name`, `species`, `info`, `wateredAt`, `replantedAt`, `fertilizedAt`, `wateringInterval`, `isMailSent`, `nextWateringAt` ) VALUES (:id, :name, :species, :info, :wateredAt, :replantedAt, :fertilizedAt,:wateringInterval, :isMailSent, :nextWateringAt)', {
       id: this.id,
       name: this.name,
-      species: this.species,
-      info: this.info,
+      species: this.species ? this.species : null,
+      info: this.info ? this.info : null,
       wateredAt: this.wateredAt,
-      replantedAt: this.replantedAt,
-      fertilizedAt: this.fertilizedAt,
+      replantedAt: this.replantedAt ? this.replantedAt : null,
+      fertilizedAt: this.fertilizedAt ? this.fertilizedAt : null,
       wateringInterval: this.wateringInterval,
       isMailSent: this.isMailSent,
       nextWateringAt: this.nextWateringAt,
     });
+
     return this.id;
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "flowers-care-app",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "An application where users can take care of their plants and trade them on the marketplace.",
   "main": "index.ts",
   "scripts": {
