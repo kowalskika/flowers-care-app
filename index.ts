@@ -1,26 +1,25 @@
 import express, { json } from 'express';
-import fileUpload from 'express-fileupload';
-import cors from 'cors';
-import rateLimit from 'express-rate-limit';
+import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
+
 import 'express-async-errors';
-import { config } from './config/config';
+
 import { handleError } from './utils/errors';
 import { homeRouter } from './routes/home.router';
 import { flowerRouter } from './routes/flower.router';
+import { rateLimiter } from './middleware/rateLimiter';
+import { corsCfg } from './middleware/corsCfg';
+import { credentials } from './middleware/credentials';
 
 const app = express();
+
 app
-  .use(cors({
-    origin: config.corsOrigin,
-  }))
+  .use(cookieParser())
+  .use(credentials)
+  .use(corsCfg)
   .use(json())
-  .use(rateLimit({
-    windowMs: 5 * 60 * 1000,
-    max: 100,
-    standardHeaders: true,
-    legacyHeaders: false,
-  }))
-  .use(fileUpload())
+  .use(rateLimiter)
+  .use(morgan('dev'))
   .use(handleError);
 
 app

@@ -30,6 +30,7 @@
     "quotes": ["warn", "single"],
     "import/prefer-default-export": "off",
     "no-console": "off",
+    "import/no-extraneous-dependencies": "off",
     "import/extensions": [
       "error",
       {
