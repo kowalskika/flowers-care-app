@@ -20,8 +20,10 @@ export class FlowerRecord implements FlowerEntity {
   public wateringInterval: number;
   public isMailSent: boolean = false;
   public nextWateringAt: string;
+  public userId: string;
 
   constructor(obj: FlowerEntity) {
+    this.userId = obj.userId;
     this.id = obj.id;
     this.name = obj.name;
     this.species = obj.species;
@@ -38,8 +40,8 @@ export class FlowerRecord implements FlowerEntity {
     }
   }
 
-  public static async listAll(): Promise<FlowerRecord[]> {
-    const [flowersList] = (await pool.execute('SELECT * FROM `flowers` ORDER BY `name` ASC')) as FlowerRecordResult;
+  public static async listAll(userId: string): Promise<FlowerRecord[]> {
+    const [flowersList] = (await pool.execute('SELECT * FROM `flowers` WHERE `userId` = :userId ORDER BY `name` ASC', { userId })) as FlowerRecordResult;
     console.log(flowersList);
     return flowersList.map((flower: FlowerRecord) => new FlowerRecord(
       {
@@ -54,14 +56,17 @@ export class FlowerRecord implements FlowerEntity {
     const [flower] = (await pool.execute('SELECT * FROM `flowers` WHERE `id` = :id', {
       id,
     })) as FlowerRecordResult;
-    const { fertilizedAt, replantedAt } = flower[0];
-    return flower.length === 0 ? null : new FlowerRecord({
-      ...flower[0],
-      wateredAt: new Date(flower[0].wateredAt).toLocaleDateString('fr-CH'),
-      fertilizedAt: fertilizedAt ? new Date(flower[0].fertilizedAt).toLocaleDateString('fr-CH') : null,
-      replantedAt: replantedAt ? new Date(flower[0].replantedAt).toLocaleDateString('fr-CH') : null,
-      nextWateringAt: addDays(new Date(flower[0].wateredAt), Number(flower[0].wateringInterval)).toLocaleDateString('fr-CH'),
-    });
+    if (flower[0]) {
+      const { fertilizedAt, replantedAt } = flower[0];
+      return new FlowerRecord({
+        ...flower[0],
+        wateredAt: new Date(flower[0].wateredAt).toLocaleDateString('fr-CH'),
+        fertilizedAt: fertilizedAt ? new Date(flower[0].fertilizedAt).toLocaleDateString('fr-CH') : null,
+        replantedAt: replantedAt ? new Date(flower[0].replantedAt).toLocaleDateString('fr-CH') : null,
+        nextWateringAt: addDays(new Date(flower[0].wateredAt), Number(flower[0].wateringInterval)).toLocaleDateString('fr-CH'),
+      });
+    }
+    return null;
   }
 
   public async delete(): Promise<void | null> {
@@ -69,7 +74,7 @@ export class FlowerRecord implements FlowerEntity {
       id: this.id,
     });
   }
-  public async updateData(updatedWateredAt: string): Promise<string> {
+  public async updateDate(updatedWateredAt: string): Promise<string> {
     this.nextWateringAt = addDays(new Date(), Number(this.wateringInterval)).toISOString().slice(0, 19).replace('T', ' ');
     await pool.execute('UPDATE `flowers` SET `wateredAt`= :wateredAt, `nextWateringAt` = :nextWateringAt WHERE `id` = :flowerId', {
       wateredAt: updatedWateredAt,
@@ -89,8 +94,8 @@ export class FlowerRecord implements FlowerEntity {
       name,
       species,
       wateredAt: dateStringToDBDateString(wateredAt),
-      replantedAt: dateStringToDBDateString(replantedAt),
-      fertilizedAt: dateStringToDBDateString(fertilizedAt),
+      replantedAt: replantedAt ? dateStringToDBDateString(replantedAt) : null,
+      fertilizedAt: fertilizedAt ? dateStringToDBDateString(fertilizedAt) : null,
       nextWateringAt: dateStringToDBDateString(nextWateringAt),
       wateringInterval,
       info,
@@ -103,8 +108,9 @@ export class FlowerRecord implements FlowerEntity {
 
     this.nextWateringAt = addDays(new Date(this.wateredAt), Number(this.wateringInterval)).toISOString().slice(0, 19).replace('T', ' ');
 
-    await pool.execute('INSERT INTO `flowers` (`id`, `name`, `species`, `info`, `wateredAt`, `replantedAt`, `fertilizedAt`, `wateringInterval`, `isMailSent`, `nextWateringAt` ) VALUES (:id, :name, :species, :info, :wateredAt, :replantedAt, :fertilizedAt,:wateringInterval, :isMailSent, :nextWateringAt)', {
+    await pool.execute('INSERT INTO `flowers` (`id`, `userId`, `name`, `species`, `info`, `wateredAt`, `replantedAt`, `fertilizedAt`, `wateringInterval`, `isMailSent`, `nextWateringAt` ) VALUES (:id, :userId, :name, :species, :info, :wateredAt, :replantedAt, :fertilizedAt,:wateringInterval, :isMailSent, :nextWateringAt)', {
       id: this.id,
+      userId: this.userId,
       name: this.name,
       species: this.species ? this.species : null,
       info: this.info ? this.info : null,
