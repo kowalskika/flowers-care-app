@@ -9,4 +9,5 @@ export interface FlowerEntity {
   wateringInterval: number;
   isMailSent: boolean;
   nextWateringAt: string;
+  userId: string;
 }
