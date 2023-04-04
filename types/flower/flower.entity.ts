@@ -14,6 +14,8 @@ export interface FlowerEntity {
 
 export type FLowerUpdateDateReq = Pick<FlowerEntity, 'userId' | 'wateredAt'>;
 
+export type FlowerEditForm = Omit<FlowerEntity, 'id' | 'userId' | 'isMailSent' >;
+
 export enum FlowerUpdateForm {
   name = 'name',
   wateredAt = 'wateredAt',

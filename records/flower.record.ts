@@ -40,7 +40,7 @@ export class FlowerRecord implements FlowerEntity {
     }
   }
 
-  public static async listAll(userId: string): Promise<FlowerRecord[]> {
+  public static async listAllByUserId(userId: string): Promise<FlowerRecord[]> {
     const [flowersList] = (await pool.execute('SELECT * FROM `flowers` WHERE `userId` = :userId ORDER BY `name` ASC', { userId })) as FlowerRecordResult;
 
     return flowersList.map((flower: FlowerRecord) => new FlowerRecord(
