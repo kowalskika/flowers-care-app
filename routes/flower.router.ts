@@ -1,6 +1,6 @@
 import express from 'express';
 import { FlowerRecord } from '../records/flower.record';
-import { FlowerEntity } from '../types';
+import { FlowerEntity, FLowerUpdateDateReq } from '../types';
 import { ValidationError } from '../utils/errors';
 
 export const flowerRouter = express.Router();
@@ -17,12 +17,13 @@ flowerRouter
 flowerRouter
   .get('/:flowerId', async (req, res) => {
     const { user: userId } = req.query as { user: string };
-
     const flowerEntity = await FlowerRecord.getOne(req.params.flowerId);
+
     if (flowerEntity === null) {
       res.status(404);
       throw new ValidationError('Ops, something went wrong: flower with this id does not exist. Please try again.');
     }
+
     if (flowerEntity.userId === userId) {
       res.json(flowerEntity);
     } else {
@@ -57,7 +58,7 @@ flowerRouter
 flowerRouter
   .patch('/:id', async (req, res) => {
     const { body }: {
-      body: any
+      body: FLowerUpdateDateReq
     } = req;
     const flower = await FlowerRecord.getOne(req.params.id);
     if (flower === null) {
