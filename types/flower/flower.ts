@@ -1,3 +1,3 @@
 import { FlowerEntity } from './flower.entity';
 
-export type CreateFlowerReq = Omit<FlowerEntity, 'id' >;
+export type CreateFlowerReq = Omit<FlowerEntity, 'id' | 'userId' >;
