@@ -3,7 +3,7 @@ import { FieldPacket } from 'mysql2';
 import { FlowerEntity } from '../types';
 import { ValidationError } from '../utils/errors';
 import { pool } from '../utils/db';
-import { addDays } from '../utils/addDays';
+import { addDaysToDbString, addDaysToLocaleDateString } from '../utils/addDays';
 import { dateStringToDBDateString } from '../utils/dateStringToDBDateString';
 import { dateToLocaleDateString } from '../utils/dateToLocaleDateString';
 
@@ -20,9 +20,11 @@ export class FlowerRecord implements FlowerEntity {
   public wateringInterval: number;
   public isMailSent: boolean = false;
   public nextWateringAt: string;
+  public userId: string;
 
   constructor(obj: FlowerEntity) {
     this.id = obj.id;
+    this.userId = obj.userId;
     this.name = obj.name;
     this.species = obj.species;
     this.info = obj.info;
@@ -38,39 +40,48 @@ export class FlowerRecord implements FlowerEntity {
     }
   }
 
-  public static async listAll(): Promise<FlowerRecord[]> {
-    const [flowersList] = (await pool.execute('SELECT * FROM `flowers` ORDER BY `name` ASC')) as FlowerRecordResult;
-    console.log(flowersList);
+  public static async listAllByUserId(userId: string): Promise<FlowerRecord[]> {
+    const [flowersList] = (await pool.execute('SELECT * FROM `flowers` WHERE `userId` = :userId ORDER BY `name` ASC', { userId })) as FlowerRecordResult;
+
     return flowersList.map((flower: FlowerRecord) => new FlowerRecord(
       {
         ...flower,
         wateredAt: dateToLocaleDateString(flower.wateredAt),
-        nextWateringAt: addDays(new Date(flower.wateredAt), Number(flower.wateringInterval)).toLocaleDateString('fr-CH'),
+        nextWateringAt: addDaysToLocaleDateString(new Date(flower.wateredAt), Number(flower.wateringInterval)),
       },
     ));
   }
 
-  public static async getOne(id: string): Promise<FlowerRecord> {
+  public static async getOne(id: string): Promise<FlowerRecord | null> {
     const [flower] = (await pool.execute('SELECT * FROM `flowers` WHERE `id` = :id', {
       id,
     })) as FlowerRecordResult;
-    const { fertilizedAt, replantedAt } = flower[0];
-    return flower.length === 0 ? null : new FlowerRecord({
-      ...flower[0],
-      wateredAt: new Date(flower[0].wateredAt).toLocaleDateString('fr-CH'),
-      fertilizedAt: fertilizedAt ? new Date(flower[0].fertilizedAt).toLocaleDateString('fr-CH') : null,
-      replantedAt: replantedAt ? new Date(flower[0].replantedAt).toLocaleDateString('fr-CH') : null,
-      nextWateringAt: addDays(new Date(flower[0].wateredAt), Number(flower[0].wateringInterval)).toLocaleDateString('fr-CH'),
-    });
+
+    if (flower[0]) {
+      const {
+        fertilizedAt, replantedAt, wateredAt, wateringInterval,
+      } = flower[0];
+
+      return new FlowerRecord({
+        ...flower[0],
+        wateredAt: dateToLocaleDateString(wateredAt),
+        fertilizedAt: fertilizedAt ? dateToLocaleDateString(fertilizedAt) : null,
+        replantedAt: replantedAt ? dateToLocaleDateString(replantedAt) : null,
+        nextWateringAt: addDaysToLocaleDateString(new Date(wateredAt), Number(wateringInterval)),
+      });
+    }
+    return null;
   }
 
-  public async delete(): Promise<void | null> {
+  public async delete(): Promise<void> {
     await pool.execute('DELETE FROM `flowers` WHERE `id` = :id', {
       id: this.id,
     });
   }
-  public async updateData(updatedWateredAt: string): Promise<string> {
-    this.nextWateringAt = addDays(new Date(), Number(this.wateringInterval)).toISOString().slice(0, 19).replace('T', ' ');
+
+  public async updateDate(updatedWateredAt: string): Promise<string> {
+    this.nextWateringAt = addDaysToDbString(new Date(), Number(this.wateringInterval));
+
     await pool.execute('UPDATE `flowers` SET `wateredAt`= :wateredAt, `nextWateringAt` = :nextWateringAt WHERE `id` = :flowerId', {
       wateredAt: updatedWateredAt,
       nextWateringAt: this.nextWateringAt,
@@ -84,27 +95,26 @@ export class FlowerRecord implements FlowerEntity {
     const {
       info, wateredAt, replantedAt, fertilizedAt, wateringInterval, nextWateringAt, species, name,
     } = flower;
-    const { id } = this;
     await pool.execute('UPDATE `flowers` SET `name`=:name, `species`=:species, `wateredAt`= :wateredAt, `replantedAt`=:replantedAt, `fertilizedAt`=:fertilizedAt, `nextWateringAt` = :nextWateringAt, `wateringInterval`=:wateringInterval, `info`=:info WHERE `id` = :flowerId', {
       name,
       species,
       wateredAt: dateStringToDBDateString(wateredAt),
-      replantedAt: dateStringToDBDateString(replantedAt),
-      fertilizedAt: dateStringToDBDateString(fertilizedAt),
+      replantedAt: replantedAt ? dateStringToDBDateString(replantedAt) : null,
+      fertilizedAt: fertilizedAt ? dateStringToDBDateString(fertilizedAt) : null,
       nextWateringAt: dateStringToDBDateString(nextWateringAt),
       wateringInterval,
       info,
-      flowerId: id,
+      flowerId: this.id,
     });
   }
 
   public async insert(): Promise<string> {
     this.id = this.id ?? uuid();
+    this.nextWateringAt = addDaysToDbString(new Date(this.wateredAt), Number(this.wateringInterval));
 
-    this.nextWateringAt = addDays(new Date(this.wateredAt), Number(this.wateringInterval)).toISOString().slice(0, 19).replace('T', ' ');
-
-    await pool.execute('INSERT INTO `flowers` (`id`, `name`, `species`, `info`, `wateredAt`, `replantedAt`, `fertilizedAt`, `wateringInterval`, `isMailSent`, `nextWateringAt` ) VALUES (:id, :name, :species, :info, :wateredAt, :replantedAt, :fertilizedAt,:wateringInterval, :isMailSent, :nextWateringAt)', {
+    await pool.execute('INSERT INTO `flowers` (`id`, `userId`, `name`, `species`, `info`, `wateredAt`, `replantedAt`, `fertilizedAt`, `wateringInterval`, `isMailSent`, `nextWateringAt` ) VALUES (:id, :userId, :name, :species, :info, :wateredAt, :replantedAt, :fertilizedAt,:wateringInterval, :isMailSent, :nextWateringAt)', {
       id: this.id,
+      userId: this.userId,
       name: this.name,
       species: this.species ? this.species : null,
       info: this.info ? this.info : null,

@@ -10,7 +10,6 @@ export const sessionRouter = Router();
 sessionRouter
   .post('/', async (req, res) => {
     const { email, password } = req.body;
-    console.log({ email, password });
     if (!email || !password) throw new ValidationError('Email and password are required.');
     const user = await UserRecord.getUserByEmail(email);
     if (!user) throw new ValidationError('Wrong email or password');
@@ -21,7 +20,6 @@ sessionRouter
     const refreshToken = sign({ id: user.id }, config.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
     user.refreshToken = refreshToken;
     await user.updateUserData();
-    console.log(user);
     res.cookie('__refresh', refreshToken, {
       httpOnly: true,
       secure: true,
