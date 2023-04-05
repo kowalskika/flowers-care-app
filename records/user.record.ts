@@ -40,7 +40,6 @@ export class UserRecord implements UserEntity {
       throw new ValidationError('Password is to long. Maximum characters for password is 100.');
     }
     if (!/[A-Z]/.test(this.password)) {
-      console.log(this.password);
       throw new ValidationError('Password must contains at least one capital letter.');
     }
     if (!/[a-z]/.test(this.password)) {
@@ -61,7 +60,6 @@ export class UserRecord implements UserEntity {
       await pool.execute('INSERT INTO `users` (`id`, `email`, `password`) VALUES (:id, :email, :password)', this);
       return this.id;
     } catch (e) {
-      console.log(e);
       throw new ValidationError('Email is already in use.');
     }
   }
@@ -80,7 +78,6 @@ export class UserRecord implements UserEntity {
   }
 
   static async getUserByEmail(email: string) {
-    console.log(email);
     const [res] = await pool.execute('SELECT * FROM `users` WHERE `email` = :email', { email }) as MysqlUsersResponse;
     return res[0] ? new UserRecord(res[0]) : null;
   }

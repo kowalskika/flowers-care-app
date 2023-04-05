@@ -4,15 +4,21 @@ export interface FlowerEntity {
   species?: string;
   info?: string;
   wateredAt: string;
-  replantedAt?: string;
-  fertilizedAt?: string;
+  replantedAt?: string | null;
+  fertilizedAt?: string | null
   wateringInterval: number;
   isMailSent: boolean;
   nextWateringAt: string;
   userId: string;
 }
 
+export interface FlowerEntityRes {
+  data: FlowerEntity;
+}
+
 export type FLowerUpdateDateReq = Pick<FlowerEntity, 'userId' | 'wateredAt'>;
+
+export type CreateFlowerReq = Omit<FlowerEntity, 'id' | 'userId' >;
 
 export type FlowerEditForm = Omit<FlowerEntity, 'id' | 'userId' | 'isMailSent' >;
 
@@ -25,5 +31,3 @@ export enum FlowerUpdateForm {
   fertilizedAt = 'fertilizedAt',
   wateringInterval = 'wateringInterval',
 }
-
-export type CreateFlowerReq = Omit<FlowerEntity, 'id' | 'userId' >;

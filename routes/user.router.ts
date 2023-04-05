@@ -11,7 +11,7 @@ userRouter
   .post('/', async (req, res) => {
     const userReq = req.body as UserRecord;
     const user = new UserRecord(userReq);
-    console.log(user);
+
     await user.insertNewUser();
     res.sendStatus(201);
   })
@@ -20,7 +20,8 @@ userRouter
     const { userId } = req.params;
     const { password, newPassword, newEmail } = req.body as { password: string, newEmail?: string, newPassword?: string };
     const user = await UserRecord.getUserById(userId);
-    if (!user) throw new Error('No user with that id');
+
+    if (!user) throw new ValidationError('No user with that id');
     const match = await compare(password, user.password);
     if (!match) {
       throw new ValidationError('Wrong password.');
