@@ -1,8 +1,11 @@
 import { v4 as uuid } from 'uuid';
 import { FieldPacket } from 'mysql2';
-import { FlowerEntity } from '../types/flower/flower.entity';
+import { FlowerEntity } from '../types';
 import { ValidationError } from '../utils/errors';
 import { pool } from '../utils/db';
+import { addDaysToDbString, addDaysToLocaleDateString } from '../utils/addDays';
+import { dateStringToDBDateString } from '../utils/dateStringToDBDateString';
+import { dateToLocaleDateString } from '../utils/dateToLocaleDateString';
 
 type FlowerRecordResult = [FlowerEntity[], FieldPacket[]];
 
@@ -16,9 +19,12 @@ export class FlowerRecord implements FlowerEntity {
   public fertilizedAt?: string;
   public wateringInterval: number;
   public isMailSent: boolean = false;
+  public nextWateringAt: string;
+  public userId: string;
 
   constructor(obj: FlowerEntity) {
     this.id = obj.id;
+    this.userId = obj.userId;
     this.name = obj.name;
     this.species = obj.species;
     this.info = obj.info;
@@ -27,47 +33,99 @@ export class FlowerRecord implements FlowerEntity {
     this.fertilizedAt = obj.fertilizedAt;
     this.wateringInterval = obj.wateringInterval;
     this.isMailSent = obj.isMailSent;
+    this.nextWateringAt = obj.nextWateringAt;
 
     if (!this.name || this.name.length < 3 || this.name.length > 50) {
       throw new ValidationError('Incorrect child name. Name should have at least 3 characters and at most 50 characters.');
     }
   }
 
-  public static async listAll(): Promise<FlowerRecord[]> {
-    const [flowersList] = (await pool.execute('SELECT * FROM `flowers` ORDER BY `name` ASC')) as FlowerRecordResult;
-    return flowersList.map((flower: FlowerRecord) => new FlowerRecord(flower));
+  public static async listAllByUserId(userId: string): Promise<FlowerRecord[]> {
+    const [flowersList] = (await pool.execute('SELECT * FROM `flowers` WHERE `userId` = :userId ORDER BY `name` ASC', { userId })) as FlowerRecordResult;
+
+    return flowersList.map((flower: FlowerRecord) => new FlowerRecord(
+      {
+        ...flower,
+        wateredAt: dateToLocaleDateString(flower.wateredAt),
+        nextWateringAt: addDaysToLocaleDateString(new Date(flower.wateredAt), Number(flower.wateringInterval)),
+      },
+    ));
   }
 
-  public static async getOne(id: string): Promise<FlowerRecord> {
+  public static async getOne(id: string): Promise<FlowerRecord | null> {
     const [flower] = (await pool.execute('SELECT * FROM `flowers` WHERE `id` = :id', {
       id,
     })) as FlowerRecordResult;
-    return flower.length === 0 ? null : new FlowerRecord(flower[0]);
+
+    if (flower[0]) {
+      const {
+        fertilizedAt, replantedAt, wateredAt, wateringInterval,
+      } = flower[0];
+
+      return new FlowerRecord({
+        ...flower[0],
+        wateredAt: dateToLocaleDateString(wateredAt),
+        fertilizedAt: fertilizedAt ? dateToLocaleDateString(fertilizedAt) : null,
+        replantedAt: replantedAt ? dateToLocaleDateString(replantedAt) : null,
+        nextWateringAt: addDaysToLocaleDateString(new Date(wateredAt), Number(wateringInterval)),
+      });
+    }
+    return null;
   }
 
-  public async delete(): Promise<void | null> {
+  public async delete(): Promise<void> {
     await pool.execute('DELETE FROM `flowers` WHERE `id` = :id', {
       id: this.id,
     });
   }
 
+  public async updateDate(updatedWateredAt: string): Promise<string> {
+    this.nextWateringAt = addDaysToDbString(new Date(), Number(this.wateringInterval));
+
+    await pool.execute('UPDATE `flowers` SET `wateredAt`= :wateredAt, `nextWateringAt` = :nextWateringAt WHERE `id` = :flowerId', {
+      wateredAt: updatedWateredAt,
+      nextWateringAt: this.nextWateringAt,
+      flowerId: this.id,
+    });
+
+    return this.nextWateringAt;
+  }
+
+  public async updateFlowerInfo(flower: FlowerEntity): Promise<void> {
+    const {
+      info, wateredAt, replantedAt, fertilizedAt, wateringInterval, nextWateringAt, species, name,
+    } = flower;
+    await pool.execute('UPDATE `flowers` SET `name`=:name, `species`=:species, `wateredAt`= :wateredAt, `replantedAt`=:replantedAt, `fertilizedAt`=:fertilizedAt, `nextWateringAt` = :nextWateringAt, `wateringInterval`=:wateringInterval, `info`=:info WHERE `id` = :flowerId', {
+      name,
+      species,
+      wateredAt: dateStringToDBDateString(wateredAt),
+      replantedAt: replantedAt ? dateStringToDBDateString(replantedAt) : null,
+      fertilizedAt: fertilizedAt ? dateStringToDBDateString(fertilizedAt) : null,
+      nextWateringAt: dateStringToDBDateString(nextWateringAt),
+      wateringInterval,
+      info,
+      flowerId: this.id,
+    });
+  }
+
   public async insert(): Promise<string> {
     this.id = this.id ?? uuid();
-    this.species = this.species ?? '';
-    this.info = this.info ?? '';
-    this.replantedAt = this.replantedAt ?? '';
-    this.fertilizedAt = this.fertilizedAt ?? '';
-    await pool.execute('INSERT INTO `flowers` (`id`, `name`) VALUES (:id, :name, :species, :info, :wateredAt, :replantedAt, :fertilizedAt, :wateringInterval, :isMailSent)', {
+    this.nextWateringAt = addDaysToDbString(new Date(this.wateredAt), Number(this.wateringInterval));
+
+    await pool.execute('INSERT INTO `flowers` (`id`, `userId`, `name`, `species`, `info`, `wateredAt`, `replantedAt`, `fertilizedAt`, `wateringInterval`, `isMailSent`, `nextWateringAt` ) VALUES (:id, :userId, :name, :species, :info, :wateredAt, :replantedAt, :fertilizedAt,:wateringInterval, :isMailSent, :nextWateringAt)', {
       id: this.id,
+      userId: this.userId,
       name: this.name,
-      species: this.species,
-      info: this.info,
+      species: this.species ? this.species : null,
+      info: this.info ? this.info : null,
       wateredAt: this.wateredAt,
-      replantedAt: this.replantedAt,
-      fertilizedAt: this.fertilizedAt,
+      replantedAt: this.replantedAt ? this.replantedAt : null,
+      fertilizedAt: this.fertilizedAt ? this.fertilizedAt : null,
       wateringInterval: this.wateringInterval,
       isMailSent: this.isMailSent,
+      nextWateringAt: this.nextWateringAt,
     });
+
     return this.id;
   }
 

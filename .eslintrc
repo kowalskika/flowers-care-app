@@ -26,10 +26,11 @@
     "no-return-assign": "off",
     "no-shadow": "off",
     "no-plusplus": "off",
-    "max-len": ["error", { "code": 200 }],
+    "max-len": ["error", { "code": 400 }],
     "quotes": ["warn", "single"],
     "import/prefer-default-export": "off",
     "no-console": "off",
+    "import/no-extraneous-dependencies": "off",
     "import/extensions": [
       "error",
       {
