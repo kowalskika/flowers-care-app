@@ -25,6 +25,24 @@ uploadRouter
       res.end();
     }
   })
+  .post('/many/:flowerId', async (req, res) => {
+    const { user: userId } = req.query as { user: string };
+    const flowerEntity = await FlowerRecord.getOne(req.params.flowerId);
+    if (flowerEntity.userId !== userId) {
+      res.status(404);
+      res.send('err');
+      res.end();
+    }
+    const data = await uploadMultipleImages(req.body.images);
+    const copyArr = flowerEntity.photosUrl.length > 0 ? JSON.parse(flowerEntity.photosUrl as string) : [];
+    data.forEach((el) => copyArr.push(el));
+    console.log(JSON.stringify(data));
+    await flowerEntity.updateFlowerInfo({
+      ...flowerEntity,
+      photosUrl: JSON.stringify(copyArr),
+    });
+    res.send(copyArr);
+  })
   .post('/:flowerId', async (req, res) => {
     const { user: userId } = req.query as { user: string };
     const flowerEntity = await FlowerRecord.getOne(req.params.flowerId);
@@ -41,8 +59,4 @@ uploadRouter
       photosUrl: JSON.stringify(copyArr),
     });
     res.send(copyArr);
-  })
-  .post('/many', async (req, res) => {
-    const data = await uploadMultipleImages(req.body.images);
-    res.send(data);
   });
