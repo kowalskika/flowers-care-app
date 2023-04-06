@@ -21,6 +21,7 @@ export class FlowerRecord implements FlowerEntity {
   public isMailSent: boolean = false;
   public nextWateringAt: string;
   public userId: string;
+  public photosUrl: string | string[];
 
   constructor(obj: FlowerEntity) {
     this.id = obj.id;
@@ -34,6 +35,7 @@ export class FlowerRecord implements FlowerEntity {
     this.wateringInterval = obj.wateringInterval;
     this.isMailSent = obj.isMailSent;
     this.nextWateringAt = obj.nextWateringAt;
+    this.photosUrl = obj.photosUrl;
 
     if (!this.name || this.name.length < 3 || this.name.length > 50) {
       throw new ValidationError('Incorrect child name. Name should have at least 3 characters and at most 50 characters.');
@@ -93,9 +95,9 @@ export class FlowerRecord implements FlowerEntity {
 
   public async updateFlowerInfo(flower: FlowerEntity): Promise<void> {
     const {
-      info, wateredAt, replantedAt, fertilizedAt, wateringInterval, nextWateringAt, species, name,
+      info, wateredAt, replantedAt, fertilizedAt, wateringInterval, nextWateringAt, species, name, photosUrl,
     } = flower;
-    await pool.execute('UPDATE `flowers` SET `name`=:name, `species`=:species, `wateredAt`= :wateredAt, `replantedAt`=:replantedAt, `fertilizedAt`=:fertilizedAt, `nextWateringAt` = :nextWateringAt, `wateringInterval`=:wateringInterval, `info`=:info WHERE `id` = :flowerId', {
+    await pool.execute('UPDATE `flowers` SET `name`=:name, `species`=:species, `wateredAt`= :wateredAt, `replantedAt`=:replantedAt, `fertilizedAt`=:fertilizedAt, `nextWateringAt` = :nextWateringAt, `wateringInterval`=:wateringInterval, `photosUrl`=:photosUrl,`info`=:info WHERE `id` = :flowerId', {
       name,
       species,
       wateredAt: dateStringToDBDateString(wateredAt),
@@ -103,6 +105,7 @@ export class FlowerRecord implements FlowerEntity {
       fertilizedAt: fertilizedAt ? dateStringToDBDateString(fertilizedAt) : null,
       nextWateringAt: dateStringToDBDateString(nextWateringAt),
       wateringInterval,
+      photosUrl,
       info,
       flowerId: this.id,
     });
