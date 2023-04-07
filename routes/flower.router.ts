@@ -2,16 +2,22 @@ import express from 'express';
 import { FlowerRecord } from '../records/flower.record';
 import { FlowerEntity, FLowerUpdateDateReq } from '../types';
 import { ValidationError } from '../utils/errors';
+import { UserRecord } from '../records/user.record';
 
 export const flowerRouter = express.Router();
 
 flowerRouter
   .get('/', async (req, res) => {
     const { user: userId } = req.query as { user: string };
-    const flowersList = await FlowerRecord.listAllByUserId(userId);
-    res.json(
-      flowersList as FlowerEntity[],
-    );
+    const user = await UserRecord.getUserById(userId);
+    if (user !== null) {
+      const flowersList = await FlowerRecord.listAllByUserId(userId);
+      res.json(
+        flowersList as FlowerEntity[],
+      );
+    } else {
+      res.status(404);
+    }
   });
 
 flowerRouter
@@ -33,9 +39,14 @@ flowerRouter
 
 flowerRouter
   .post('/', async (req, res) => {
-    const addedFlower = new FlowerRecord(req.body as FlowerEntity);
-    await addedFlower.insert();
-    res.json(addedFlower);
+    const user = await UserRecord.getUserById(req.body.userId);
+    if (user !== null) {
+      const addedFlower = new FlowerRecord(req.body as FlowerEntity);
+      await addedFlower.insert();
+      res.json(addedFlower);
+    } else {
+      res.status(404);
+    }
   });
 
 flowerRouter
