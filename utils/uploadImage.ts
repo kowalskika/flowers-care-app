@@ -14,9 +14,7 @@ export const uploadImage = async (img: string): Promise<string> => {
       invalidate: true,
       resource_type: 'auto',
     });
-    const res = data.secure_url;
-    console.log(res);
-    return res;
+    return data.secure_url;
   } catch (err) {
     console.log(err);
     return err.message;
