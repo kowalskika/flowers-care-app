@@ -13,6 +13,7 @@ import { flowerRouter } from './routes/flower.router';
 import { userRouter } from './routes/user.router';
 import { sessionRouter } from './routes/session.router';
 import { uploadRouter } from './routes/upload.router';
+import { task } from './utils/mailSender';
 
 const app = express();
 
@@ -33,4 +34,5 @@ app
   .use('/session', sessionRouter)
   .use('/upload', uploadRouter);
 
+task.start;
 app.listen(3001, () => console.log('listening on port http://localhost:3001'));
