@@ -6,10 +6,12 @@ import { UserRecord } from '../records/user.record';
 export const task = schedule('0 16 */2 * *', async () => {
   const records = await FlowerRecord.listAll();
   const usersToWater: any[] = [];
-  (records).forEach((record) => {
+
+  records.forEach((record) => {
     if (new Date(record.nextWateringAt) < new Date()) {
       const { userId } = record;
       const existingUser = usersToWater.find((user) => user.userId === userId);
+
       if (existingUser) {
         existingUser.flowersToWater += 1;
       } else {

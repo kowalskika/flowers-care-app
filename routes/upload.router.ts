@@ -9,8 +9,8 @@ uploadRouter
     const { user: userId } = req.query as { user: string };
     const { flowerId, photoUrl } = req.params;
     const flowerEntity = await FlowerRecord.getOne(flowerId);
+
     if (flowerEntity.userId === userId) {
-      console.log('heheh');
       const urlArr = JSON.parse(flowerEntity.photosUrl as string).filter((string: string) => {
         return string !== `https://res.cloudinary.com/dkcqqmbge/image/upload/${photoUrl.replace('*', '/')}`;
       });
@@ -24,10 +24,13 @@ uploadRouter
       res.send('err');
       res.end();
     }
-  })
+  });
+
+uploadRouter
   .post('/many/:flowerId', async (req, res) => {
     const { user: userId } = req.query as { user: string };
     const flowerEntity = await FlowerRecord.getOne(req.params.flowerId);
+
     if (flowerEntity.userId !== userId) {
       res.status(404);
       res.send('err');
@@ -36,16 +39,19 @@ uploadRouter
     const data = await uploadMultipleImages(req.body.images);
     const copyArr = flowerEntity.photosUrl.length > 0 ? JSON.parse(flowerEntity.photosUrl as string) : [];
     data.forEach((el) => copyArr.push(el));
-    console.log(JSON.stringify(data));
+
     await flowerEntity.updateFlowerInfo({
       ...flowerEntity,
       photosUrl: JSON.stringify(copyArr),
     });
     res.send(copyArr);
-  })
+  });
+
+uploadRouter
   .post('/:flowerId', async (req, res) => {
     const { user: userId } = req.query as { user: string };
     const flowerEntity = await FlowerRecord.getOne(req.params.flowerId);
+
     if (flowerEntity.userId !== userId) {
       res.status(404);
       res.send('err');

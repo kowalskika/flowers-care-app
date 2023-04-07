@@ -34,5 +34,6 @@ app
   .use('/session', sessionRouter)
   .use('/upload', uploadRouter);
 
-task.start;
+const taskInstance = task.start;
+console.log(taskInstance);
 app.listen(3001, () => console.log('listening on port http://localhost:3001'));

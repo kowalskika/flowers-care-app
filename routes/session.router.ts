@@ -11,8 +11,10 @@ sessionRouter
   .post('/', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) throw new ValidationError('Email and password are required.');
+
     const user = await UserRecord.getUserByEmail(email);
     if (!user) throw new ValidationError('Wrong email or password');
+
     const match = await compare(password, user.password);
     if (!match) throw new ValidationError('Wrong email or password');
 
@@ -27,14 +29,18 @@ sessionRouter
       maxAge: 1000 * 60 * 60 * 24 * 7,
     });
     res.json({ id: user.id, accessToken });
-  })
+  });
+
+sessionRouter
   .patch('/', async (req, res) => {
     try {
       const refreshToken = req.cookies.__refresh;
       if (!refreshToken) return res.sendStatus(401);
+
       const { id } = verify(refreshToken, config.REFRESH_TOKEN_SECRET) as { id: string };
       const user = await UserRecord.getUserById(id);
       if (!user) return res.sendStatus(403);
+
       const accessToken = sign({ id }, config.ACCESS_TOKEN_SECRET, { expiresIn: '15min' });
       user.refreshToken = sign({ id: user.id }, config.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
       await user.updateUserData();
@@ -44,13 +50,17 @@ sessionRouter
         res.sendStatus(403);
       } else res.sendStatus(500);
     }
-  })
+  });
+
+sessionRouter
   .delete('/', async (req, res) => {
     const refreshToken = req.cookies.__refresh;
     if (!refreshToken) return res.sendStatus(200);
+
     const { id } = verify(refreshToken, config.REFRESH_TOKEN_SECRET) as { id: string };
     const user = await UserRecord.getUserById(id);
     if (!user) return res.sendStatus(200);
+
     user.refreshToken = null;
     await user.updateUserData();
 

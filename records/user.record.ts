@@ -61,6 +61,7 @@ export class UserRecord implements UserEntity {
       this.allowMail = this.allowMail === 'true' ? this.allowMail : 'false';
       this.password = await hash(this.password, await genSalt(10));
       await pool.execute('INSERT INTO `users` (`id`, `email`, `password`, `allowMail`) VALUES (:id, :email, :password, :allowMail)', this);
+
       return this.id;
     } catch (e) {
       throw new ValidationError('Email is already in use.');
@@ -88,11 +89,13 @@ export class UserRecord implements UserEntity {
 
   static async getUserByEmail(email: string) {
     const [res] = await pool.execute('SELECT * FROM `users` WHERE `email` = :email', { email }) as MysqlUsersResponse;
+
     return res[0] ? new UserRecord(res[0]) : null;
   }
 
   static async getUserById(id: string) {
     const [res] = await pool.execute('SELECT * FROM `users` WHERE `id` = :id', { id }) as MysqlUsersResponse;
+
     return res[0] ? new UserRecord(res[0]) : null;
   }
 }

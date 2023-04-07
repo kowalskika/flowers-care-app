@@ -10,7 +10,6 @@
  *   REFRESH_TOKEN_SECRET: '',
  *   mailUser: 'sendMailFrom@yyy.com',
  *   mailPass: 'sendMailFromPass',
- *   mailReceiver: 'sendMailTo@xxx.com',
  *   mailTopic: 'Flower Alert',
  * };
  */
