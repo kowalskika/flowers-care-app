@@ -7,9 +7,9 @@ export interface FlowerEntity {
   replantedAt?: string | null;
   fertilizedAt?: string | null
   wateringInterval: number;
-  isMailSent: boolean;
   nextWateringAt: string;
   userId: string;
+  photosUrl: string | string[];
 }
 
 export interface FlowerEntityRes {
@@ -18,7 +18,7 @@ export interface FlowerEntityRes {
 
 export type FLowerUpdateDateReq = Pick<FlowerEntity, 'userId' | 'wateredAt'>;
 
-export type CreateFlowerReq = Omit<FlowerEntity, 'id' | 'userId' >;
+export type CreateFlowerReq = Omit<FlowerEntity, 'id' | 'userId' | 'photosUrl' >;
 
 export type FlowerEditForm = Omit<FlowerEntity, 'id' | 'userId' | 'isMailSent' >;
 

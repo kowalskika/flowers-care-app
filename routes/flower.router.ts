@@ -2,16 +2,22 @@ import express from 'express';
 import { FlowerRecord } from '../records/flower.record';
 import { FlowerEntity, FLowerUpdateDateReq } from '../types';
 import { ValidationError } from '../utils/errors';
+import { UserRecord } from '../records/user.record';
 
 export const flowerRouter = express.Router();
 
 flowerRouter
   .get('/', async (req, res) => {
     const { user: userId } = req.query as { user: string };
-    const flowersList = await FlowerRecord.listAllByUserId(userId);
-    res.json(
-      flowersList as FlowerEntity[],
-    );
+    const user = await UserRecord.getUserById(userId);
+    if (user !== null) {
+      const flowersList = await FlowerRecord.listAllByUserId(userId);
+      res.json(
+        flowersList as FlowerEntity[],
+      );
+    } else {
+      res.sendStatus(404);
+    }
   });
 
 flowerRouter
@@ -20,22 +26,27 @@ flowerRouter
     const flowerEntity = await FlowerRecord.getOne(req.params.flowerId);
 
     if (flowerEntity === null) {
-      res.status(404);
+      res.sendStatus(404);
       throw new ValidationError('Ops, something went wrong: flower with this id does not exist. Please try again.');
     }
 
     if (flowerEntity.userId === userId) {
       res.json(flowerEntity);
     } else {
-      res.status(404);
+      res.sendStatus(404);
     }
   });
 
 flowerRouter
   .post('/', async (req, res) => {
-    const addedFlower = new FlowerRecord(req.body as FlowerEntity);
-    await addedFlower.insert();
-    res.json(addedFlower);
+    const user = await UserRecord.getUserById(req.body.userId);
+    if (user !== null) {
+      const addedFlower = new FlowerRecord(req.body as FlowerEntity);
+      await addedFlower.insert();
+      res.json(addedFlower);
+    } else {
+      res.sendStatus(404);
+    }
   });
 
 flowerRouter
@@ -51,7 +62,7 @@ flowerRouter
       const data = await flower.updateFlowerInfo(body);
       res.json(data);
     } else {
-      res.status(404);
+      res.sendStatus(404);
     }
   });
 
@@ -68,7 +79,7 @@ flowerRouter
       const nextWaterAt = await flower.updateDate(body.wateredAt);
       res.json(nextWaterAt);
     } else {
-      res.status(404);
+      res.sendStatus(404);
     }
   });
 
@@ -81,6 +92,6 @@ flowerRouter
       await flowerToDelete.delete();
       res.end();
     } else {
-      res.status(404);
+      res.sendStatus(404);
     }
   });

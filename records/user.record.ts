@@ -14,12 +14,14 @@ export class UserRecord implements UserEntity {
   email: string;
   password: string;
   refreshToken?: string;
+  allowMail: string;
 
   constructor(obj: UserEntity) {
     this.id = obj.id;
     this.email = obj.email;
     this.password = obj.password;
     this.refreshToken = obj.refreshToken;
+    this.allowMail = obj.allowMail;
     this.validate();
   }
 
@@ -56,8 +58,9 @@ export class UserRecord implements UserEntity {
   async insertNewUser() {
     try {
       this.id = uuid();
+      this.allowMail = this.allowMail === 'true' ? this.allowMail : 'false';
       this.password = await hash(this.password, await genSalt(10));
-      await pool.execute('INSERT INTO `users` (`id`, `email`, `password`) VALUES (:id, :email, :password)', this);
+      await pool.execute('INSERT INTO `users` (`id`, `email`, `password`, `allowMail`) VALUES (:id, :email, :password, :allowMail)', this);
       return this.id;
     } catch (e) {
       throw new ValidationError('Email is already in use.');
@@ -71,6 +74,12 @@ export class UserRecord implements UserEntity {
     } else {
       await pool.execute('UPDATE `users` SET `email` = :email, `refreshToken` = :refreshToken WHERE `id` = :id', this);
     }
+  }
+
+  async updateUserAllowMail(value: string) {
+    await pool.execute('UPDATE `users` SET `allowMail` = :allowMail WHERE `id` = :id', {
+      allowMail: `${value}`, id: this.id,
+    });
   }
 
   async deleteUser() {
