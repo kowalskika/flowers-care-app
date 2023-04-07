@@ -24,4 +24,5 @@ export const mailOptions = {
   from: config.mailUser,
   to: config.mailReceiver,
   subject: config.mailTopic,
+  text: '',
 };
