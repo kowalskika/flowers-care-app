@@ -18,7 +18,6 @@ export class FlowerRecord implements FlowerEntity {
   public replantedAt?: string;
   public fertilizedAt?: string;
   public wateringInterval: number;
-  public isMailSent: boolean = false;
   public nextWateringAt: string;
   public userId: string;
   public photosUrl: string | string[];
@@ -33,13 +32,17 @@ export class FlowerRecord implements FlowerEntity {
     this.replantedAt = obj.replantedAt;
     this.fertilizedAt = obj.fertilizedAt;
     this.wateringInterval = obj.wateringInterval;
-    this.isMailSent = obj.isMailSent;
     this.nextWateringAt = obj.nextWateringAt;
     this.photosUrl = obj.photosUrl;
 
     if (!this.name || this.name.length < 3 || this.name.length > 50) {
       throw new ValidationError('Incorrect child name. Name should have at least 3 characters and at most 50 characters.');
     }
+  }
+  public static async listAll(): Promise<FlowerRecord[]> {
+    const [flowersList] = (await pool.execute('SELECT * FROM `flowers` ORDER BY `name` ASC')) as FlowerRecordResult;
+
+    return flowersList.map((flower: FlowerRecord) => new FlowerRecord(flower));
   }
 
   public static async listAllByUserId(userId: string): Promise<FlowerRecord[]> {
@@ -115,7 +118,7 @@ export class FlowerRecord implements FlowerEntity {
     this.id = this.id ?? uuid();
     this.nextWateringAt = addDaysToDbString(new Date(this.wateredAt), Number(this.wateringInterval));
 
-    await pool.execute('INSERT INTO `flowers` (`id`, `userId`, `name`, `species`, `info`, `wateredAt`, `replantedAt`, `fertilizedAt`, `wateringInterval`, `isMailSent`, `nextWateringAt` ) VALUES (:id, :userId, :name, :species, :info, :wateredAt, :replantedAt, :fertilizedAt,:wateringInterval, :isMailSent, :nextWateringAt)', {
+    await pool.execute('INSERT INTO `flowers` (`id`, `userId`, `name`, `species`, `info`, `wateredAt`, `replantedAt`, `fertilizedAt`, `wateringInterval`, `nextWateringAt` ) VALUES (:id, :userId, :name, :species, :info, :wateredAt, :replantedAt, :fertilizedAt,:wateringInterval, :nextWateringAt)', {
       id: this.id,
       userId: this.userId,
       name: this.name,
@@ -125,16 +128,9 @@ export class FlowerRecord implements FlowerEntity {
       replantedAt: this.replantedAt ? this.replantedAt : null,
       fertilizedAt: this.fertilizedAt ? this.fertilizedAt : null,
       wateringInterval: this.wateringInterval,
-      isMailSent: this.isMailSent,
       nextWateringAt: this.nextWateringAt,
     });
 
     return this.id;
-  }
-
-  public async mailReminderSent(): Promise<void> {
-    await pool.execute('UPDATE `flowers` SET `isMailSent`= "true" WHERE `id` = :id', {
-      id: this.id,
-    });
   }
 }
