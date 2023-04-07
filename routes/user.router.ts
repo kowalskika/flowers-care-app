@@ -11,8 +11,13 @@ userRouter
   .post('/', async (req, res) => {
     const userReq = req.body as UserRecord;
     const user = new UserRecord(userReq);
-    await user.insertNewUser();
-    res.sendStatus(201);
+    const isAlreadyRegistered = await UserRecord.getUserByEmail(user.email);
+    if (isAlreadyRegistered === null) {
+      await user.insertNewUser();
+      res.sendStatus(201);
+    } else {
+      res.sendStatus(409);
+    }
   })
 
   .patch('/:userId', async (req, res) => {

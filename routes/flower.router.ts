@@ -16,7 +16,7 @@ flowerRouter
         flowersList as FlowerEntity[],
       );
     } else {
-      res.status(404);
+      res.sendStatus(404);
     }
   });
 
@@ -26,14 +26,14 @@ flowerRouter
     const flowerEntity = await FlowerRecord.getOne(req.params.flowerId);
 
     if (flowerEntity === null) {
-      res.status(404);
+      res.sendStatus(404);
       throw new ValidationError('Ops, something went wrong: flower with this id does not exist. Please try again.');
     }
 
     if (flowerEntity.userId === userId) {
       res.json(flowerEntity);
     } else {
-      res.status(404);
+      res.sendStatus(404);
     }
   });
 
@@ -45,7 +45,7 @@ flowerRouter
       await addedFlower.insert();
       res.json(addedFlower);
     } else {
-      res.status(404);
+      res.sendStatus(404);
     }
   });
 
@@ -62,7 +62,7 @@ flowerRouter
       const data = await flower.updateFlowerInfo(body);
       res.json(data);
     } else {
-      res.status(404);
+      res.sendStatus(404);
     }
   });
 
@@ -79,7 +79,7 @@ flowerRouter
       const nextWaterAt = await flower.updateDate(body.wateredAt);
       res.json(nextWaterAt);
     } else {
-      res.status(404);
+      res.sendStatus(404);
     }
   });
 
@@ -92,6 +92,6 @@ flowerRouter
       await flowerToDelete.delete();
       res.end();
     } else {
-      res.status(404);
+      res.sendStatus(404);
     }
   });
