@@ -11,14 +11,15 @@ userRouter
   .post('/', async (req, res) => {
     const userReq = req.body as UserRecord;
     const user = new UserRecord(userReq);
-
     await user.insertNewUser();
     res.sendStatus(201);
   })
 
   .patch('/:userId', async (req, res) => {
     const { userId } = req.params;
-    const { password, newPassword, newEmail } = req.body as { password: string, newEmail?: string, newPassword?: string };
+    const {
+      password, newPassword, newEmail,
+    } = req.body as { password: string, newEmail?: string, newPassword?: string, newAllowMail?: string };
     const user = await UserRecord.getUserById(userId);
 
     if (!user) throw new ValidationError('No user with that id');
@@ -41,6 +42,15 @@ userRouter
     } else {
       throw new ValidationError('All data are required.');
     }
+    res.sendStatus(200);
+  })
+
+  .patch('/mailAllow/:userId', async (req, res) => {
+    const { userId } = req.params;
+    const { newAllowMail } = req.body as { newAllowMail?: string };
+    const user = await UserRecord.getUserById(userId);
+    if (!user) throw new ValidationError('No user with that id');
+    await user.updateUserAllowMail(newAllowMail);
     res.sendStatus(200);
   })
 
