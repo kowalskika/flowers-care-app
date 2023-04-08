@@ -8,8 +8,8 @@
  *   ALLOWED_ORIGINS: ['http://localhost:3000'],
  *   ACCESS_TOKEN_SECRET: '',
  *   REFRESH_TOKEN_SECRET: '',
- *   mailUser: 'sendMailFrom@yyy.com',
- *   mailPass: 'sendMailFromPass',
+ *   mailUser: 'xxx@yyy.com',
+ *   mailPass: 'mailPass',
  *   mailTopic: 'Flower Alert',
  * };
  */

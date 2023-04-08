@@ -9,16 +9,17 @@ export const flowerRouter = express.Router();
 flowerRouter
   .get('/', async (req, res) => {
     const { user: userId } = req.query as { user: string };
-    const user = await UserRecord.getUserById(userId);
-
-    if (user !== null) {
-      const flowersList = await FlowerRecord.listAllByUserId(userId);
-      res.json(
-        flowersList as FlowerEntity[],
-      );
-    } else {
-      res.sendStatus(404);
-    }
+    if (userId) {
+      const user = await UserRecord.getUserById(userId);
+      if (user !== null) {
+        const flowersList = await FlowerRecord.listAllByUserId(userId);
+        res.json(
+          flowersList as FlowerEntity[],
+        );
+      } else {
+        res.sendStatus(404);
+      }
+    } else { res.end(); }
   });
 
 flowerRouter
