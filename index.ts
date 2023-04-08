@@ -1,4 +1,4 @@
-import express, { json, urlencoded } from 'express';
+import express, { json, Router, urlencoded } from 'express';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 
@@ -27,12 +27,16 @@ app
   .use(morgan('dev'))
   .use(handleError);
 
-app
+const router = Router();
+
+router
   .use('/', homeRouter)
   .use('/flower', flowerRouter)
   .use('/user', userRouter)
   .use('/session', sessionRouter)
   .use('/upload', uploadRouter);
+
+app.use('/api', router);
 
 const taskInstance = task.start;
 console.log(taskInstance);
