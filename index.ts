@@ -36,7 +36,7 @@ router
   .use('/session', sessionRouter)
   .use('/upload', uploadRouter);
 
-app.use('/api', router);
+app.use('/', router);
 
 const taskInstance = task.start;
 console.log(taskInstance);
