@@ -1,11 +1,12 @@
 import { v4 as uuid } from 'uuid';
 import { FieldPacket } from 'mysql2';
+
 import { FlowerEntity } from '../types';
 import { ValidationError } from '../utils/errors';
 import { pool } from '../utils/db';
-import { addDaysToDbString, addDaysToLocaleDateString } from '../utils/addDays';
-import { dateStringToDBDateString } from '../utils/dateStringToDBDateString';
-import { dateToLocaleDateString } from '../utils/dateToLocaleDateString';
+import {
+  addDaysToDbString, addDaysToLocaleDateString, dateStringToDBDateString, dateToLocaleDateString,
+} from '../utils/dateOperations';
 
 type FlowerRecordResult = [FlowerEntity[], FieldPacket[]];
 
@@ -35,10 +36,11 @@ export class FlowerRecord implements FlowerEntity {
     this.nextWateringAt = obj.nextWateringAt;
     this.photosUrl = obj.photosUrl;
 
-    if (!this.name || this.name.length < 3 || this.name.length > 50) {
+    if (!this.name || this.name.length < 3 || this.name.length > 100) {
       throw new ValidationError('Incorrect child name. Name should have at least 3 characters and at most 50 characters.');
     }
   }
+
   public static async listAll(): Promise<FlowerRecord[]> {
     const [flowersList] = (await pool.execute('SELECT * FROM `flowers` ORDER BY `name` ASC')) as FlowerRecordResult;
 
@@ -100,6 +102,7 @@ export class FlowerRecord implements FlowerEntity {
     const {
       info, wateredAt, replantedAt, fertilizedAt, wateringInterval, nextWateringAt, species, name, photosUrl,
     } = flower;
+
     await pool.execute('UPDATE `flowers` SET `name`=:name, `species`=:species, `wateredAt`= :wateredAt, `replantedAt`=:replantedAt, `fertilizedAt`=:fertilizedAt, `nextWateringAt` = :nextWateringAt, `wateringInterval`=:wateringInterval, `photosUrl`=:photosUrl,`info`=:info WHERE `id` = :flowerId', {
       name,
       species,

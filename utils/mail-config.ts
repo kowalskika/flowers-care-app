@@ -22,7 +22,7 @@ export const mailCallBack = (error: Error, info: SentMessageInfo) => {
 
 export const mailOptions = {
   from: config.mailUser,
-  to: config.mailReceiver,
+  to: '',
   subject: config.mailTopic,
   text: '',
 };
