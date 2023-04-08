@@ -36,7 +36,7 @@ uploadRouter
       res.send('err');
       res.end();
     }
-    const data = await uploadMultipleImages(req.body.images);
+    const data = await uploadMultipleImages(req.body.base64s);
     const copyArr = flowerEntity.photosUrl.length > 0 ? JSON.parse(flowerEntity.photosUrl as string) : [];
     data.forEach((el) => copyArr.push(el));
 
