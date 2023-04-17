@@ -5,7 +5,7 @@ import { FlowerEntity } from '../types';
 import { ValidationError } from '../utils/errors';
 import { pool } from '../utils/db';
 import {
-  addDaysToDbString, addDaysToLocaleDateString, dateStringToDBDateString, dateToLocaleDateString,
+  addDaysToDbString, addDaysToLocaleDateString, dateToLocaleDateString, dateStringToDBDateString,
 } from '../utils/dateOperations';
 
 type FlowerRecordResult = [FlowerEntity[], FieldPacket[]];
@@ -106,9 +106,9 @@ export class FlowerRecord implements FlowerEntity {
     await pool.execute('UPDATE `flowers` SET `name`=:name, `species`=:species, `wateredAt`= :wateredAt, `replantedAt`=:replantedAt, `fertilizedAt`=:fertilizedAt, `nextWateringAt` = :nextWateringAt, `wateringInterval`=:wateringInterval, `photosUrl`=:photosUrl,`info`=:info WHERE `id` = :flowerId', {
       name,
       species,
-      wateredAt: dateStringToDBDateString(wateredAt),
-      replantedAt: replantedAt ? dateStringToDBDateString(replantedAt) : null,
-      fertilizedAt: fertilizedAt ? dateStringToDBDateString(fertilizedAt) : null,
+      wateredAt,
+      replantedAt: replantedAt || null,
+      fertilizedAt: fertilizedAt || null,
       nextWateringAt: dateStringToDBDateString(nextWateringAt),
       wateringInterval,
       photosUrl,
@@ -120,7 +120,7 @@ export class FlowerRecord implements FlowerEntity {
   public async insert(): Promise<string> {
     this.id = this.id ?? uuid();
     this.nextWateringAt = addDaysToDbString(new Date(this.wateredAt), Number(this.wateringInterval));
-
+    console.log(this);
     await pool.execute('INSERT INTO `flowers` (`id`, `userId`, `name`, `species`, `info`, `wateredAt`, `replantedAt`, `fertilizedAt`, `wateringInterval`, `nextWateringAt` ) VALUES (:id, :userId, :name, :species, :info, :wateredAt, :replantedAt, :fertilizedAt,:wateringInterval, :nextWateringAt)', {
       id: this.id,
       userId: this.userId,
