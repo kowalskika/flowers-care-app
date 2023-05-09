@@ -9,15 +9,11 @@ uploadRouter
     const { user: userId } = req.query as { user: string };
     const { flowerId, photoUrl } = req.params;
     const flowerEntity = await FlowerRecord.getOne(flowerId);
-
     if (flowerEntity.userId === userId) {
       const urlArr = JSON.parse(flowerEntity.photosUrl as string).filter((string: string) => {
         return string !== `https://res.cloudinary.com/dkcqqmbge/image/upload/${photoUrl.replace('*', '/')}`;
       });
-      await flowerEntity.updateFlowerInfo({
-        ...flowerEntity,
-        photosUrl: JSON.stringify(urlArr),
-      });
+      await flowerEntity.updatePhotosArr(JSON.stringify(urlArr), flowerId);
       res.send(urlArr);
     } else {
       res.status(404);
@@ -29,7 +25,9 @@ uploadRouter
 uploadRouter
   .post('/many/:flowerId', async (req, res) => {
     const { user: userId } = req.query as { user: string };
-    const flowerEntity = await FlowerRecord.getOne(req.params.flowerId);
+    const { flowerId } = req.params;
+
+    const flowerEntity = await FlowerRecord.getOne(flowerId);
 
     if (flowerEntity.userId !== userId) {
       res.status(404);
@@ -40,17 +38,16 @@ uploadRouter
     const copyArr = flowerEntity.photosUrl.length > 0 ? JSON.parse(flowerEntity.photosUrl as string) : [];
     data.forEach((el) => copyArr.push(el));
 
-    await flowerEntity.updateFlowerInfo({
-      ...flowerEntity,
-      photosUrl: JSON.stringify(copyArr),
-    });
+    await flowerEntity.updatePhotosArr(JSON.stringify(copyArr), flowerId);
+
     res.send(copyArr);
   });
 
 uploadRouter
   .post('/:flowerId', async (req, res) => {
     const { user: userId } = req.query as { user: string };
-    const flowerEntity = await FlowerRecord.getOne(req.params.flowerId);
+    const { flowerId } = req.params;
+    const flowerEntity = await FlowerRecord.getOne(flowerId);
 
     if (flowerEntity.userId !== userId) {
       res.status(404);
@@ -60,9 +57,6 @@ uploadRouter
     const data = await uploadImage(req.body.image);
     const copyArr = flowerEntity.photosUrl.length > 0 ? JSON.parse(flowerEntity.photosUrl as string) : [];
     copyArr.push(data);
-    await flowerEntity.updateFlowerInfo({
-      ...flowerEntity,
-      photosUrl: JSON.stringify(copyArr),
-    });
+    await flowerEntity.updatePhotosArr(JSON.stringify(copyArr), flowerId);
     res.send(copyArr);
   });

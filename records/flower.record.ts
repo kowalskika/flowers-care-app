@@ -98,6 +98,15 @@ export class FlowerRecord implements FlowerEntity {
     return this.nextWateringAt;
   }
 
+  public async updatePhotosArr(photosUrl: string, flowerId: string): Promise<string> {
+    await pool.execute('UPDATE `flowers` SET `photosUrl`= :photosUrl WHERE `id` = :flowerId', {
+      photosUrl,
+      flowerId,
+    });
+
+    return this.nextWateringAt;
+  }
+
   public async updateFlowerInfo(flower: FlowerEntity): Promise<void> {
     const {
       info, wateredAt, replantedAt, fertilizedAt, wateringInterval, nextWateringAt, species, name, photosUrl,
